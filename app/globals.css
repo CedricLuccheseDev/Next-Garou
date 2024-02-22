@@ -1,5 +1,9 @@
-/* Background color */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+
+/* Background color */
 body {
   background-color: #2D2D36;
 }

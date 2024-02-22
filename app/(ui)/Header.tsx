@@ -1,22 +1,23 @@
 import React from 'react'
 import Image from 'next/image'
+import { Button } from '@nextui-org/button'
 
 function Header() {
   return (
-    <div className={"sticky top-0 z-10 w-full p-4 flex items-center justify-center duration-300 "}>
-      <div className={"w-full " + 1280}>
-        <div className="flex items-center justify-between h-8 w-full">
-          <div className="h-full flex items-center space-x-8">
-            <div className="h-full">
-              <Image
-                src="/logotext.svg"
-                width={128}
-                height={32}
-                alt="Logo"
-              />
-            </div>
-          </div>
-        </div>
+    <div className={"container w-full mx-auto p-4 flex items-center justify-between duration-200 h-24"}>
+      <div className='flex items-center justify-center space-x-2'>
+        <Image
+          src="/logotext.svg"
+          width={156}
+          height={36}
+          alt="Logo"
+        />
+        <div className='text-white'>Blog</div>
+      </div>
+      <div className='w-full'></div>
+      <div className='flex items-center justify-center space-x-2'>
+          <Button color="primary">Se connecter</Button>
+          <Button className='text-white'>S inscrire</Button>
       </div>
     </div>
   )

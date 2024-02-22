@@ -1,17 +1,12 @@
+import { Button } from "@nextui-org/react";
 import Header from "./(ui)/Header";
 import Wrapper from "./(ui)/Wrapper";
 
 export default function Home() {
   return (
-    <main>
+    <main className="flex-grow w-full flex flex-col items-center">
       <Header />
-      <Wrapper>
-        a
-      </Wrapper>
-      <div className="grid grid-cols-2">
-        <div className="bg-red-500">ok</div>
-        <div>ok</div>
-      </div>
+      <div className="h-screen"></div>
     </main>
   );
 }

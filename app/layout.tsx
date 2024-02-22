@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import Header from "./(ui)/Header";
+import { Providers } from "./providers";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={montserrat.className}>
-        <main className="max-w-md mx-auto rounded-xl shadow-md overflow-hidden md:max-w-4xl">{children}</main>
+        <Providers>
+          <main className="">{children}</main>
+        </Providers>
       </body>
     </html>
   );
