@@ -16,7 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <header className="max-w-md mx-auto rounded-xl shadow-md overflow-hidden md:max-w-4xl">
+          <div className="text-4xl text-red-500 text-center">Next Garou</div>
+        </header>
+        <main className="max-w-md mx-auto rounded-xl shadow-md overflow-hidden md:max-w-4xl">{children}</main>
+      </body>
     </html>
   );
 }
