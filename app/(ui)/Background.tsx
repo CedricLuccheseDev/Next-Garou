@@ -49,7 +49,7 @@ function Background(props: {
         </div>
       </div>
 
-      <div className="flex-grow w-full flex flex-col items-center p-4">
+      <div className="flex-grow w-full flex flex-col items-center p-6">
         {children}
       </div>
     </div>
