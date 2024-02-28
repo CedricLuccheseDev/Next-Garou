@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import Background from "../src/layout/Background";
+import Header from "../src/layout/Header";
+import Wrapper from "../src/layout/Wrapper";
 
 export default function Home() {
   return (
-    <div>
-      <div>ok</div>
-      <Button>ok</Button>
-    </div>
+    <Background>
+      ok
+    </Background>
   );
 }
