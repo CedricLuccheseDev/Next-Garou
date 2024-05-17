@@ -15,7 +15,7 @@ function Background(props: {
         "flex flex-col items-center justify-center max-w-screen relative h-screen max-h-screen min-h-screen items-center"
       }
     >
-
+{/*
       <div className="overflow-hidden h-screen w-full absolute">
         <div className="absolute -top-64 h-[120vh] w-screen">
               <Image
@@ -28,7 +28,7 @@ function Background(props: {
                 objectPosition="right"
                 quality={100} />
           </div>
-      </div>
+      </div> */}
 
 
       <div className="overflow-hidden h-screen w-full absolute">

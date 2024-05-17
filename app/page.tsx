@@ -1,12 +1,14 @@
-import { Button } from "@/components/ui/button";
 import Background from "../src/layout/Background";
-import Header from "../src/layout/Header";
 import Wrapper from "../src/layout/Wrapper";
+import { useEffect } from "react";
+import { insertCoin } from "playroomkit";
 
 export default function Home() {
   return (
     <Background>
-      ok
+      <Wrapper className="py-4">
+        <h1 className="font-bold text-5xl animate-pulse">The next wolf game generation</h1>
+      </Wrapper>
     </Background>
   );
 }

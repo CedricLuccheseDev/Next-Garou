@@ -13,9 +13,9 @@ function Wrapper(props: {
     maxWidth = "max-w-[1280px]",
   } = props;
   return (
-    <div className="px-2 w-full flex justify-center flex-grow">
+    <div className="w-full flex justify-center flex-grow">
       <div className={
-        "w-full flex-grow"
+        "container w-full flex-grow"
         + " "
         + className
         + " "
