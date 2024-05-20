@@ -1,7 +1,5 @@
 import Background from "../src/layout/Background";
 import Wrapper from "../src/layout/Wrapper";
-import { useEffect } from "react";
-import { insertCoin } from "playroomkit";
 
 export default function Home() {
   return (
