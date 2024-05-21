@@ -19,8 +19,8 @@ export default function Chat() {
 
   return (
     <div className='h-full w-full flex flex-col space-y-8'>
-      <div className="flex-grow bg-gray-900 rounded-md p-4 overflow-y-auto">
-        <ul className='flex flex-col-reverse'>
+      <div className="flex-grow bg-gray-900 rounded-md p-4 h-96 overflow-y-auto">
+        <ul className='flex flex-col-reverse space-y-reverse'>
           {chat.toReversed().map((txt, index) => (
             <li key={index}>{txt}</li>
           ))}
