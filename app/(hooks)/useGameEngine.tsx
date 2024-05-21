@@ -1,4 +1,4 @@
-import { isHost, onPlayerJoin, useMultiplayerState, usePlayersList } from 'playroomkit';
+import { isHost, onPlayerJoin, PlayerState, useMultiplayerState, usePlayersList } from 'playroomkit';
 import { createContext, useContext, useEffect } from 'react';
 
 /**
@@ -62,7 +62,8 @@ type GameEngineContextType = {
   phase: number;
   roles: any[];
   nightActionPhaseRole: number;
-  sendMessage: ( author: string, msg: string ) => void;
+  sendMessage: (author: string, msg: string) => void;
+  getPlayer: (authorId: string) => PlayerState | undefined;
 };
 
 const GameEngineContext = createContext<GameEngineContextType | undefined>(undefined);
@@ -140,10 +141,21 @@ export const GameEngineProvider = ( {children}: any ) => {
     }
   }
 
-  const sendMessage = ( authorId: string, msg: string ) => {
+  // Exposed functions
+
+  const getPlayer = (authorId: string): PlayerState | undefined => {
     const player = players.find((player) => player.id == authorId);
 
     if (player == undefined)
+      return undefined;
+    return player;
+  }
+
+  const sendMessage = ( authorId: string, msg: string ) => {
+    const player = players.find((player) => player.id == authorId);
+    const role = player?.getState("role");
+
+    if (player == undefined || role == undefined)
       return;
 
     setChat([
@@ -164,7 +176,8 @@ export const GameEngineProvider = ( {children}: any ) => {
   return (
     <GameEngineContext.Provider value={{
       ...gameState,
-      sendMessage
+      sendMessage,
+      getPlayer,
     }}>
       {children}
     </GameEngineContext.Provider>
