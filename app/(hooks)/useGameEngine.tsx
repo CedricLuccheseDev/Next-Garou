@@ -51,11 +51,21 @@ const NightPhaseCardsOrder = [
 ];
 
 export const PhasesTexts = [
+  "The party is beginning",
   "The village is sleeping",
   "The village vote for the Mayor",
   "The village debate about a suspect",
-  "The village vote the suspect"
+  "The village vote the suspect",
+  "The village go to bed",
+  "won the game",
 ];
+
+export const NightPhasesTexts = [
+  "The soothsayer wakes up",
+  "The werewolves wake up",
+  "The witch wakes up",
+  "The village wake up"
+]
 
 // Setup
 

@@ -1,16 +1,18 @@
 "use client"
 
 import React, { useState } from 'react'
-import { useGameEngine } from '../../(hooks)/useGameEngine';
+import { NightPhasesTexts, Phases, PhasesTexts, useGameEngine } from '../../(hooks)/useGameEngine';
 
 export default function Board() {
 
   const {
-    sendMessage,
+    phase,
+    nightPhaseRole
   } = useGameEngine();
 
   return (
-    <div className='h-64 w-full flex flex-col space-y-4'>
+    <div className="flex-grow bg-gray-900 rounded-md p-4 h-16 w-full overflow-y-auto">
+      {PhasesTexts[phase]} { phase === Phases.Night ? NightPhasesTexts[nightPhaseRole] : "" }
     </div>
   )
 }

@@ -22,7 +22,7 @@ export default function Game() {
 
   return (
     <GameEngineProvider>
-      <div className='flex flex-row w-full h-full'>
+      <div className='flex flex-row w-full h-full space-x-4'>
         <Sidebar />
         <Body />
       </div>

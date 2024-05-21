@@ -18,7 +18,7 @@ export default function Chat() {
   const [text, setText] = useState("");
 
   return (
-    <div className='h-full w-full flex flex-col space-y-8'>
+    <div className='h-full w-full flex flex-col space-y-4'>
       <div className="flex-grow bg-gray-900 rounded-md p-4 h-96 overflow-y-auto">
         <ul className='flex flex-col-reverse space-y-reverse'>
           {chat.toReversed().map((txt, index) => (

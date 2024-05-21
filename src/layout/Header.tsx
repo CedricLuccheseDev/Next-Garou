@@ -21,6 +21,9 @@ function Header() {
               alt="Logo"
             />
           </Link>
+          <Link href="/game">
+            <Button variant="ghost">Partie</Button>
+          </Link>
           <Button variant="ghost">Règles</Button>
           <Button variant="ghost">Blog</Button>
         </div>
