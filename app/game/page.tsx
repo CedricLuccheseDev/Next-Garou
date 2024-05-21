@@ -1,13 +1,10 @@
 "use client"
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import Background from '@/src/layout/Background';
-import Wrapper from '@/src/layout/Wrapper';
-import { insertCoin, myPlayer, onPlayerJoin, RPC } from 'playroomkit';
+import { insertCoin } from 'playroomkit';
 import React, { useEffect, useState } from 'react'
-import { GameEngineProvider, useGameEngine } from '../(hooks)/useGameEngine';
-import Party from './(ui)/party';
+import { GameEngineProvider } from '../(hooks)/useGameEngine';
+import Sidebar from './(ui)/sidebar';
+import Body from './(ui)/body';
 
 export default function Game() {
 
@@ -25,7 +22,10 @@ export default function Game() {
 
   return (
     <GameEngineProvider>
-      <Party />
+      <div className='flex flex-row w-full h-full'>
+        <Sidebar />
+        <Body />
+      </div>
     </GameEngineProvider>
   );
 };

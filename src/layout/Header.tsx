@@ -10,8 +10,8 @@ function Header() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="flex justify-between border-b border-b-accent py-4">
-      <div className='container flex justify-between items-center max-w-[1280px] w-full'>
+    <header className="flex justify-between py-4">
+      <div className='flex justify-between items-center w-full px-4'>
         <div className='flex items-center space-x-4'>
           <Link href="/">
             <Image
