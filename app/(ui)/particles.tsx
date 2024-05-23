@@ -44,7 +44,7 @@ export default function HomeParticles() {
           }
         },
         particles: {
-          color: { value: "#ffffff10" },
+          color: { value: "#ffffffbb" },
           move: {
             direction: "none",
             enable: true,

@@ -7,8 +7,6 @@ import { useTheme } from 'next-themes'
 import Link from 'next/link'
 
 function Header() {
-  const { theme, setTheme } = useTheme()
-
   return (
     <header className="flex justify-between py-4">
       <div className='flex justify-between items-center w-full px-4'>

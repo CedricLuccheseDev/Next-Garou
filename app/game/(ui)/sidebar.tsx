@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { Phases, Roles, useGameEngine } from '@/app/(hooks)/useGameEngine';
-import { myPlayer, usePlayersList } from 'playroomkit';
+import { myPlayer, setState, usePlayersList } from 'playroomkit';
+import { Button } from '@/components/ui/button';
 
 export default function Sidebar() {
 
@@ -10,6 +11,9 @@ export default function Sidebar() {
     round,
     phase,
     timer,
+    pause,
+    setPlayOrPause,
+    phaseEnd,
   } = useGameEngine();
 
   const me = myPlayer();
@@ -27,9 +31,9 @@ export default function Sidebar() {
           Timer {timer}
         </h1>
         <h1>
-          You are {Roles[me.getState("role")]}
+          You are {Roles[me.getState("role")]} & { me.getProfile().name }
         </h1>
-        <div className='flex flex-col'>
+        <div className='flex flex-col space-y-2 '>
           {
             players.map(player => {
               const isDead = player.getState("dead");
@@ -48,6 +52,9 @@ export default function Sidebar() {
             })
           }
         </div>
+        <div className='h-full'/>
+        <Button onClick={() => setPlayOrPause(!pause)}>{pause ? "play" : "pause"}</Button>
+        <Button onClick={() => phaseEnd()}>Phase end</Button>
 
     </div>
   );

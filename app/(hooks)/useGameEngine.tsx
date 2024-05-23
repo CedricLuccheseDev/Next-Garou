@@ -1,4 +1,4 @@
-import { getState, isHost, onPlayerJoin, PlayerState, useMultiplayerState, usePlayersList } from 'playroomkit';
+import { getState, isHost, onPlayerJoin, PlayerState, RPC, useMultiplayerState, usePlayersList } from 'playroomkit';
 import { createContext, useContext, useEffect, useRef } from 'react';
 
 /**
@@ -33,17 +33,26 @@ export enum Phases
   Count
 };
 
-type WitchData = {
-  playerProtected: string | undefined;
-  playerKilled: string | undefined;
-};
+export type Message =
+{
+  message: string;
+}
+
+export type NarratorMessage = Message &
+{
+}
+
+export type PlayerMessage = Message &
+{
+  playerId: string;
+}
 
 // Constants
 
 const TimePhase = 90;
 const TimePhaseStarting = 15;
 
-const NightPhaseCardsOrder = [
+export const NightPhaseCardsOrder = [
   Roles.Soothsayer,
   Roles.Werewolf,
   Roles.Witch,
@@ -72,6 +81,7 @@ export const NightPhasesTexts = [
 type GameEngineContextType = {
   chat: any[];
   timer: number;
+  pause: boolean;
   round: number;
   phase: number;
   roles: any[];
@@ -81,8 +91,13 @@ type GameEngineContextType = {
   witchTarget: string;
   witchKilled: string;
   witchSaved: string;
-  sendMessage: (author: string, msg: string) => void;
+  setPlayOrPause: (state: boolean) => void;
+  sendMessage: (msg: PlayerMessage) => void;
   getPlayer: (authorId: string) => PlayerState | undefined;
+  getPlayersAlive: () => PlayerState [];
+  getPlayersVoted: (filteredPlayers: PlayerState []) => any;
+  // Debug
+  phaseEnd: () => void;
 };
 
 const GameEngineContext = createContext<GameEngineContextType | undefined>(undefined);
@@ -93,6 +108,7 @@ export const GameEngineProvider = ( {children}: any ) => {
   const [launch, setLaunch] = useMultiplayerState("launch", false);
   const [chat, setChat] = useMultiplayerState("chat", []);
   const [timer, setTimer] = useMultiplayerState("timer", 0);
+  const [pause, setPause] = useMultiplayerState("pause", false);
   const [round, setRound] = useMultiplayerState("round", 1);
   const [phase, setPhase] = useMultiplayerState("phase", 0);
   const [roles, setRoles] = useMultiplayerState("roles", []);
@@ -112,6 +128,7 @@ export const GameEngineProvider = ( {children}: any ) => {
   const states = {
     chat,
     timer,
+    pause,
     round,
     phase,
     roles,
@@ -183,6 +200,7 @@ export const GameEngineProvider = ( {children}: any ) => {
     }
 
     setTimer(newTime);
+    sendNarratorMessage({ message: PhasesTexts[getState("phase")]});
   }
 
   const phaseNight = () => {
@@ -209,11 +227,7 @@ export const GameEngineProvider = ( {children}: any ) => {
        */
       case Roles.Werewolf:
         const werewolves = playersAlive.filter(player => player.getState("role") === Roles.Werewolf);
-        const targets = werewolves.map(player => player.getState("target"));
-        const voteCounts = targets.reduce((acc, target) => {
-          acc[target] = (acc[target] || 0) + 1;
-          return acc;
-        }, {});
+        const voteCounts = getPlayersVoted(werewolves);
         const voteCountsArray = Object.values(voteCounts).map(value => Number(value));
         const maxVotes = Math.max(...voteCountsArray);
         const topTargets = Object.keys(voteCounts).filter(target => voteCounts[target] === maxVotes);
@@ -260,10 +274,11 @@ export const GameEngineProvider = ( {children}: any ) => {
     setNightPhaseRole(0);
 
     // Check if it's a game over
-    if (isGameOver())
+    if (isGameOver()) {
       setPhase(Phases.GameOver);
-    // Or continue the next round
-    else {
+      sendNarratorMessage({ message: "Game Over"});
+      // Or continue the next round
+    } else {
       setRound(getState("round") + 1)
       setPhase(Phases.GoToSleep);
     }
@@ -287,7 +302,19 @@ export const GameEngineProvider = ( {children}: any ) => {
     }
   }
 
+  const sendNarratorMessage = (msg: NarratorMessage) => {
+    const date = new Date();
+    const formattedTime = date.toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+    const text = "[" + formattedTime + "] : " + msg.message;
+
+    RPC.call('chat', { players: players, msg: text }, RPC.Mode.ALL);
+  };
+
   // Exposed functions
+
+  const setPlayOrPause = (state: boolean): void => {
+    setPause(state);
+  };
 
   const getPlayer = (authorId: string): PlayerState | undefined => {
     const player = players.find((player) => player.id == authorId);
@@ -295,23 +322,32 @@ export const GameEngineProvider = ( {children}: any ) => {
     if (player == undefined)
       return undefined;
     return player;
-  }
+  };
 
   const getPlayersAlive = (): PlayerState[] => {
     return players.filter(player => player.getState("dead") == undefined);
   };
 
-  const sendMessage = ( authorId: string, msg: string ) => {
-    const player = players.find((player) => player.id == authorId);
+  const getPlayersVoted = (filteredPlayers: PlayerState []): any => {
+    const targets = filteredPlayers.map(player => player.getState("target"));
+    return targets.reduce((acc, target) => {
+        acc[target] = (acc[target] || 0) + 1;
+      return acc;
+    }, {});
+  }
+
+  const sendMessage = (msg: PlayerMessage) => {
+    const player = players.find((player) => player.id == msg.playerId);
     const role = player?.getState("role");
 
     if (player == undefined || role == undefined)
-      return;
+    return;
 
-    setChat([
-      ...chat,
-      player?.getProfile().name + " [" + Roles[player.getState("role")] + "] " +  " : " + msg
-    ]);
+    const date = new Date();
+    const formattedTime = date.toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+    const text = "[" + formattedTime + "] " + player.getProfile().name + " : " + msg.message;
+
+    RPC.call('chat', { players: players, msg: text }, RPC.Mode.ALL);
   };
 
   // Hooks
@@ -328,6 +364,8 @@ export const GameEngineProvider = ( {children}: any ) => {
   useEffect(() => {
     if (isHost()) {
       timerInterval.current = setInterval(() => {
+          if (getState("pause"))
+            return;
           let newTime = getState("timer") - 1;
           if (newTime <= 0)
             phaseEnd();
@@ -346,8 +384,13 @@ export const GameEngineProvider = ( {children}: any ) => {
   return (
     <GameEngineContext.Provider value={{
       ...states,
+      setPlayOrPause,
       sendMessage,
       getPlayer,
+      getPlayersAlive,
+      getPlayersVoted,
+      // Debug
+      phaseEnd,
     }}>
       {children}
     </GameEngineContext.Provider>
