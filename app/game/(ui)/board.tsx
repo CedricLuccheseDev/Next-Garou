@@ -56,11 +56,11 @@ export default function Board() {
   };
 
   return (
-    <div className='flex flex-col'>
-      <div className="bg-gray-900 rounded-md p-4 h-16 w-full font-medium text-8x1">
+    <div className='flex flex-col space-y-4'>
+      <div className="p-4 h-16 w-full font-medium text-8x1">
         {PhasesTexts[phase]} - { phase === Phases.Night ? NightPhasesTexts[nightPhaseRole] : "" }
       </div>
-      <div className="flex flex-row space-x-4 items-center bg-gray-900 rounded-md p-4 h-32 w-full">
+      <div className="flex flex-row space-x-4 items-center p-4 h-32 w-full">
         { renderPlayers() }
       </div>
     </div>

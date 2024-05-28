@@ -3,8 +3,8 @@
 import { insertCoin } from 'playroomkit';
 import React, { useEffect, useState } from 'react'
 import { GameEngineProvider } from '../(hooks)/useGameEngine';
-import Sidebar from './(ui)/sidebar';
-import Body from './(ui)/body';
+import ContentHeader from './(ui)/contentHeader';
+import ContentBody from './(ui)/contentBody';
 
 export default function Game() {
 
@@ -22,9 +22,18 @@ export default function Game() {
 
   return (
     <GameEngineProvider>
-      <div className='flex flex-row w-full h-full space-x-4'>
-        <Sidebar />
-        <Body />
+      {/* Page */}
+      <div className='flex flex-row w-screen h-screen'>
+        {/* Page SideBar */}
+        <div></div>
+        {/* Page Content */}
+        <div className='flex flex-col w-full h-full bg-gradient-to-b from-background to-[#070721]'>
+          <ContentHeader />
+          <ContentBody />
+          {/* Page Content Body */}
+          <div>
+          </div>
+        </div>
       </div>
     </GameEngineProvider>
   );

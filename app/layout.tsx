@@ -19,13 +19,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full w-full">
       <body className={clsx(dmSans.className, 'bg-background h-full')}>
         <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
-          <div className="flex flex-col h-full p-4">
-            <Header />
-            {children}
-          </div>
+          {children}
         </ThemeProvider>
       </body>
     </html>

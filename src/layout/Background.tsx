@@ -1,20 +1,12 @@
-import { ReactNode } from "react";
 import Image from 'next/image'
+import HomeParticles from "@/app/(ui)/particles";
 
 function Background(props: {
-  children: ReactNode,
-  className?: string,
 }) {
   const {
-    children,
-    className,
   } = props;
   return (
-    <div
-      className={
-        "flex flex-col items-center justify-center max-w-screen relative h-screen max-h-screen min-h-screen"
-      }
-    >
+    <div>
       <div className="overflow-hidden h-screen w-screen absolute">
         <div className="absolute h-[512px] w-[512px] -right-2 -top-8">
             <Image
@@ -29,9 +21,7 @@ function Background(props: {
               quality={100} />
         </div>
       </div>
-      <div className="flex-grow w-full flex flex-col p-24">
-        {children}
-      </div>
+      <HomeParticles />
     </div>
   );
 }

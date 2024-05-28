@@ -1,4 +1,4 @@
-import { getState, isHost, onPlayerJoin, PlayerState, RPC, useMultiplayerState, usePlayersList } from 'playroomkit';
+import { getState, isHost, myPlayer, onPlayerJoin, PlayerState, RPC, useMultiplayerState, usePlayersList } from 'playroomkit';
 import { createContext, useContext, useEffect, useRef } from 'react';
 
 /**
@@ -15,7 +15,7 @@ import { createContext, useContext, useEffect, useRef } from 'react';
 export enum Roles
 {
   Werewolf,
-  Soothsayer,
+  Seer,
   Witch,
   Villager,
   Count
@@ -35,16 +35,11 @@ export enum Phases
 
 export type Message =
 {
+  author: string;
+  time: string;
   message: string;
-}
-
-export type NarratorMessage = Message &
-{
-}
-
-export type PlayerMessage = Message &
-{
-  playerId: string;
+  photo: string;
+  color: string;
 }
 
 // Constants
@@ -53,10 +48,9 @@ const TimePhase = 90;
 const TimePhaseStarting = 15;
 
 export const NightPhaseCardsOrder = [
-  Roles.Soothsayer,
+  Roles.Seer,
   Roles.Werewolf,
   Roles.Witch,
-  Roles.Villager,
 ];
 
 export const PhasesTexts = [
@@ -70,7 +64,7 @@ export const PhasesTexts = [
 ];
 
 export const NightPhasesTexts = [
-  "The soothsayer wakes up",
+  "The Seer wakes up",
   "The werewolves wake up",
   "The witch wakes up",
   "The village wake up"
@@ -86,13 +80,14 @@ type GameEngineContextType = {
   phase: number;
   roles: any[];
   nightPhaseRole: number;
+  globalChat: any[];
   werewolvesTarget: string;
-  soothsayerTarget: string;
+  SeerTarget: string;
   witchTarget: string;
   witchKilled: string;
   witchSaved: string;
   setPlayOrPause: (state: boolean) => void;
-  sendMessage: (msg: PlayerMessage) => void;
+  sendPlayerMessage: (message: string) => void;
   getPlayer: (authorId: string) => PlayerState | undefined;
   getPlayersAlive: () => PlayerState [];
   getPlayersVoted: (filteredPlayers: PlayerState []) => any;
@@ -113,15 +108,17 @@ export const GameEngineProvider = ( {children}: any ) => {
   const [phase, setPhase] = useMultiplayerState("phase", 0);
   const [roles, setRoles] = useMultiplayerState("roles", []);
   const [nightPhaseRole, setNightPhaseRole] = useMultiplayerState("nightPhaseRole", 0);
+  const [globalChat, setGlobalChat] = useMultiplayerState("globalChat", []);
 
   // Roles states
   const [werewolvesTarget, setWerewolfTarget] = useMultiplayerState("wereworlfTarget", "");
-  const [soothsayerTarget, setSoothsayerTarget] = useMultiplayerState("soothsayerTarget", "");
+  const [SeerTarget, setSeerTarget] = useMultiplayerState("SeerTarget", "");
   const [witchTarget, setWitchTarget] = useMultiplayerState("witchTarget", "");
   const [witchKilled, setWitchKilled] = useMultiplayerState("witchKilled", "");
   const [witchSaved, setWitchSaved] = useMultiplayerState("witchSaved", "");
 
   // Players states
+  const me = myPlayer();
   const players = usePlayersList(true);
   players.sort((a, b) => a.id.localeCompare(b.id));
 
@@ -133,8 +130,9 @@ export const GameEngineProvider = ( {children}: any ) => {
     phase,
     roles,
     nightPhaseRole,
+    globalChat,
     werewolvesTarget,
-    soothsayerTarget,
+    SeerTarget,
     witchTarget,
     witchKilled,
     witchSaved
@@ -145,8 +143,9 @@ export const GameEngineProvider = ( {children}: any ) => {
   const makeRoles = () => {
     const playersCount = players.length;
     const werewolfRoleCount = Math.ceil(playersCount / 3);
-    let roles_: Roles[] = [];
 
+    // Format roles
+    let roles_: Roles[] = [];
     Array.from({ length: werewolfRoleCount }).map((_, index) =>
       roles_.push(Roles.Werewolf)
     );
@@ -154,7 +153,6 @@ export const GameEngineProvider = ( {children}: any ) => {
     Array.from({ length: playersCount - werewolfRoleCount }).map((_, index) =>
       roles_.push(Math.min(index + 1, Roles.Count - 1) as Roles)
     );
-
     setRoles(roles_);
 
     // Shuffle list
@@ -200,7 +198,7 @@ export const GameEngineProvider = ( {children}: any ) => {
     }
 
     setTimer(newTime);
-    sendNarratorMessage({ message: PhasesTexts[getState("phase")]});
+    sendNarratorMessage(PhasesTexts[getState("phase")], players);
   }
 
   const phaseNight = () => {
@@ -208,17 +206,6 @@ export const GameEngineProvider = ( {children}: any ) => {
 
     switch (NightPhaseCardsOrder[getState("nightPhaseRole")])
     {
-      /**
-       * Villagers
-       *
-       * Go to the next phases
-       */
-      case Roles.Villager:
-        if (getState("round") == 0)
-          setPhase(Phases.VoteMayor);
-        else
-          setPhase(Phases.Debate);
-        break;
       /**
        * Werewolves
        *
@@ -235,25 +222,27 @@ export const GameEngineProvider = ( {children}: any ) => {
         setWerewolfTarget(selectedTarget);
         break;
       /**
-       * Soothsayer
+       * Seer
        *
-       * Each night, the soothsayer target a player to show his card
+       * Each night, the Seer target a player to show his card
        */
-      case Roles.Soothsayer:
-        const soothsayer = playersAlive.find(player => player.getState("role") === Roles.Soothsayer);
-        if (soothsayer == undefined)
+      case Roles.Seer:
+        const Seer = playersAlive.find(player => player.getState("role") === Roles.Seer);
+        if (Seer == undefined)
           break;
-        const target = soothsayer.getState("target");
+        const target: PlayerState = Seer.getState("target");
         if (target == undefined)
           break;
-        setSoothsayerTarget(target);
+        setSeerTarget(target);
+        // Send narrator message
+        sendNarratorMessage(target.getProfile().name + " is a " + Roles[target.getState("role")], [ Seer ]);
       /**
        * Witch
        *
        * She Has 2 different potions : Poison and Healing
        * She can use 1 time both of them
        */
-      case Roles.Soothsayer:
+      case Roles.Seer:
         const witch = playersAlive.find(player => player.getState("role") === Roles.Witch);
         if (witch == undefined)
           break;
@@ -267,6 +256,14 @@ export const GameEngineProvider = ( {children}: any ) => {
     players.forEach(player => {
       player.setState("target", undefined);
     });
+
+    // End Phase
+    if (getState("nightPhaseRole") >= NightPhaseCardsOrder.length) {
+      if (getState("round") == 1)
+        setPhase(Phases.VoteMayor);
+      else
+        setPhase(Phases.Debate);
+    }
   }
 
   const roundEnd = () => {
@@ -276,7 +273,7 @@ export const GameEngineProvider = ( {children}: any ) => {
     // Check if it's a game over
     if (isGameOver()) {
       setPhase(Phases.GameOver);
-      sendNarratorMessage({ message: "Game Over"});
+      sendNarratorMessage("Game Over", players);
       // Or continue the next round
     } else {
       setRound(getState("round") + 1)
@@ -297,17 +294,24 @@ export const GameEngineProvider = ( {children}: any ) => {
       setNightPhaseRole(0, true);
       // Setup game
       makeRoles();
-      // Log
-      console.log("Start game");
+      // Send narrator message
+      sendNarratorMessage("The game started", players);
     }
   }
 
-  const sendNarratorMessage = (msg: NarratorMessage) => {
-    const date = new Date();
-    const formattedTime = date.toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
-    const text = "[" + formattedTime + "] : " + msg.message;
+  const sendNarratorMessage = async (message: string, targetsPlayers: PlayerState []) => {
+    // Format time
+    const formattedTime = new Date().toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
-    RPC.call('chat', { players: players, msg: text }, RPC.Mode.ALL);
+    // Fetch narrator message from OpenAI API
+    // const narratorMessage = await fetchNarratorMessage(message);
+
+    // Send message
+    setGlobalChat(
+    [
+      ...chat,
+      { targets: targetsPlayers, message: { message: message, time: formattedTime, author: "Narrator" } }
+    ]);
   };
 
   // Exposed functions
@@ -336,18 +340,51 @@ export const GameEngineProvider = ( {children}: any ) => {
     }, {});
   }
 
-  const sendMessage = (msg: PlayerMessage) => {
-    const player = players.find((player) => player.id == msg.playerId);
-    const role = player?.getState("role");
+  const sendPlayerMessage = (message: string) => {
+    // Check if role is defined
+    const role = me.getState("role");
+    if (role == undefined)
+      return;
 
-    if (player == undefined || role == undefined)
-    return;
+    // Select players targets
+    let targetsPlayers = players;
+    // Dead players send message to dead players
+    if (me.getState("dead"))
+      targetsPlayers = players.filter((target) => target.getState("dead"));
+    // Players send message to role mates in night phase
+    else if (getState("phase") == Phases.Night)
+      targetsPlayers = players.filter((target) => target.getState("role") == me.getState("role"));
 
-    const date = new Date();
-    const formattedTime = date.toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
-    const text = "[" + formattedTime + "] " + player.getProfile().name + " : " + msg.message;
+    // Format time
+    const formattedTime = new Date().toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
-    RPC.call('chat', { players: players, msg: text }, RPC.Mode.ALL);
+    // Send message
+    const profile = me.getProfile();
+    setGlobalChat(
+    [
+      ...globalChat,
+      { targets: targetsPlayers, message: { message: message, time: formattedTime, author: profile.name, photo: profile.photo, color: profile.color.hexString } }
+    ]);
+  };
+
+  // GPT
+
+  const fetchNarratorMessage = async (prompt: string): Promise<string> => {
+    try {
+      const response = await fetch('/api/gpt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await response.json();
+      return data.message;
+    } catch (error) {
+      console.error('Error fetching narrator message:', error);
+      return 'An error occurred while fetching the narrator message.';
+    }
   };
 
   // Hooks
@@ -357,7 +394,7 @@ export const GameEngineProvider = ( {children}: any ) => {
       startGame();
       setLaunch(true);
     }
-  });
+  }, []);
 
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -385,7 +422,7 @@ export const GameEngineProvider = ( {children}: any ) => {
     <GameEngineContext.Provider value={{
       ...states,
       setPlayOrPause,
-      sendMessage,
+      sendPlayerMessage,
       getPlayer,
       getPlayersAlive,
       getPlayersVoted,

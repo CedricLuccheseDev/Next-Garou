@@ -1,17 +1,18 @@
 "use client"
 
 import Image from 'next/image';
-import { Phases, Roles, useGameEngine } from '@/app/(hooks)/useGameEngine';
+import { NightPhaseCardsOrder, Phases, Roles, useGameEngine } from '@/app/(hooks)/useGameEngine';
 import { myPlayer, setState, usePlayersList } from 'playroomkit';
 import { Button } from '@/components/ui/button';
 
-export default function Sidebar() {
+export default function PlayerArea() {
 
   const {
     round,
     phase,
     timer,
     pause,
+    nightPhaseRole,
     setPlayOrPause,
     phaseEnd,
   } = useGameEngine();
@@ -20,12 +21,15 @@ export default function Sidebar() {
   const players = usePlayersList(true);
 
   return (
-    <div className='flex flex-col w-80 h-full p-8 space-y-4'>
+    <div className='flex flex-col w-full h-full p-8 space-y-4'>
         <h1>
           Round {round}
         </h1>
         <h1>
           Phase {Phases[phase]}
+        </h1>
+        <h1>
+          Night Phase {nightPhaseRole} {Roles[NightPhaseCardsOrder[nightPhaseRole]]}
         </h1>
         <h1>
           Timer {timer}
@@ -55,7 +59,6 @@ export default function Sidebar() {
         <div className='h-full'/>
         <Button onClick={() => setPlayOrPause(!pause)}>{pause ? "play" : "pause"}</Button>
         <Button onClick={() => phaseEnd()}>Phase end</Button>
-
     </div>
   );
 }
