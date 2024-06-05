@@ -2,20 +2,29 @@
 
 import Image from 'next/image'
 import { FaRegUser } from "react-icons/fa";
-import { NightPhaseCardsOrder, Phases, Roles, useGameEngine } from '@/app/(hooks)/useGameEngine';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
-import { useEffect } from 'react';
+import { Message, NightPhaseCardsOrder, Phases, Roles, useGameEngine } from '../(hooks)/useGameEngine';
+import { useEffect, useState } from 'react';
 
 export default function ContentHeader() {
+
+  const [narratorMessage, setNarratorMessage] = useState("");
 
   const {
     round,
     phase,
-    nightPhaseRole
+    nightPhaseRole,
+    globalChat
   } = useGameEngine();
 
+  useEffect(() => {
+    const message: Message = globalChat.findLast((data: Message) => data.author === "Narrator");
+    if (message != undefined)
+      setNarratorMessage(message.text);
+  }, [globalChat, ]);
+
   return (
-    <div className='relative w-full h-72'>
+    <div className='flex relative w-full h-1/4'>
       {/* Page Content Header Background */}
       <div>
         <Image
@@ -33,7 +42,9 @@ export default function ContentHeader() {
           {/* Page Content Header Foreground Narrator Component */}
           <div className='w-full flex flex-row space-x-4 items-center'>
             <FaRegUser className='relative w-8 h-8 text-white'/>
-            <div className='w-1/3 h-12 bg-white/5 backdrop-blur-md rounded-xl' />
+              <div className='flex w-1/3 h-12 bg-white/5 backdrop-blur-md rounded-xl justify-start items-center px-4 text-wrap font-mulish-regular'>
+                {narratorMessage ? narratorMessage : ""}
+              </div>
           </div>
           {/* Page Content Header Foreground Party Infos */}
           <div className='relative flex flex-col w-32 items-end'>

@@ -1,9 +1,9 @@
 "use client"
 
 import Image from 'next/image';
-import { NightPhaseCardsOrder, Phases, Roles, useGameEngine } from '@/app/(hooks)/useGameEngine';
 import { myPlayer, setState, usePlayersList } from 'playroomkit';
 import { Button } from '@/components/ui/button';
+import { NightPhaseCardsOrder, Phases, Roles, useGameEngine } from '../(hooks)/useGameEngine';
 
 export default function PlayerArea() {
 

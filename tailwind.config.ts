@@ -18,6 +18,12 @@ const config = {
         "2xl": "1400px",
       },
     },
+    fontFamily: {
+      "unbounded-bold": ["Unbounded-Bold", "sans-serif"],
+      "mulish-regular": ["Mulish-Regular", "sans-serif"],
+      "mulish-bold": ["Mulish-Bold", "sans-serif"],
+      "mulish-italic": ["Mulish-Italic", "sans-serif"],
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",

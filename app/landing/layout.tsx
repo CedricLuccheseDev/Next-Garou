@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { DM_Sans, Inter } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 import clsx from "clsx";
 import ThemeProvider from "@/src/theme/ThemeProvider";
-import Header from "@/src/layout/Header";
 
-const inter = Inter({ subsets: ["latin"] });
 const dmSans = DM_Sans({ subsets: ["latin"] })
 
 export const metadata: Metadata = {

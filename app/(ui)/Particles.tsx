@@ -56,7 +56,7 @@ export default function HomeParticles() {
             density: {
               enable: true
             },
-            value: 200
+            value: 30
           },
           opacity: {
             animation: {
@@ -69,7 +69,7 @@ export default function HomeParticles() {
             type: "circle"
           },
           size: {
-            value: 1
+            value: 1.2
           }
         }
       }

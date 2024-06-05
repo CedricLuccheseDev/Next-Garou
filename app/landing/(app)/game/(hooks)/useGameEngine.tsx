@@ -35,11 +35,13 @@ export enum Phases
 
 export type Message =
 {
+  id: number;
+  targets: PlayerState[];
   author: string;
   time: string;
-  message: string;
-  photo: string;
-  color: string;
+  text: string;
+  photo?: string;
+  color?: string;
 }
 
 // Constants
@@ -292,6 +294,7 @@ export const GameEngineProvider = ( {children}: any ) => {
       setRound(1, true);
       setPhase(Phases.Start, true);
       setNightPhaseRole(0, true);
+      setGlobalChat([], true);
       // Setup game
       makeRoles();
       // Send narrator message
@@ -299,18 +302,26 @@ export const GameEngineProvider = ( {children}: any ) => {
     }
   }
 
-  const sendNarratorMessage = async (message: string, targetsPlayers: PlayerState []) => {
+  const sendNarratorMessage = async (text: string, targetsPlayers: PlayerState []) => {
     // Format time
     const formattedTime = new Date().toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
     // Fetch narrator message from OpenAI API
     // const narratorMessage = await fetchNarratorMessage(message);
 
+    const narratorMessage: Message = {
+      id: globalChat.length,
+      targets: targetsPlayers,
+      text: text,
+      time: formattedTime,
+      author: "Narrator"
+    }
+
     // Send message
     setGlobalChat(
     [
-      ...chat,
-      { targets: targetsPlayers, message: { message: message, time: formattedTime, author: "Narrator" } }
+      ...globalChat,
+      narratorMessage
     ]);
   };
 
@@ -340,7 +351,7 @@ export const GameEngineProvider = ( {children}: any ) => {
     }, {});
   }
 
-  const sendPlayerMessage = (message: string) => {
+  const sendPlayerMessage = (text: string) => {
     // Check if role is defined
     const role = me.getState("role");
     if (role == undefined)
@@ -358,12 +369,23 @@ export const GameEngineProvider = ( {children}: any ) => {
     // Format time
     const formattedTime = new Date().toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
-    // Send message
+    // Format message
     const profile = me.getProfile();
+    const playerMessage: Message = {
+      id: globalChat.length,
+      targets: targetsPlayers,
+      text: text,
+      time: formattedTime,
+      author: profile.name,
+      photo: profile.photo,
+      color: profile.color.hexString,
+    }
+
+    // Send message
     setGlobalChat(
     [
       ...globalChat,
-      { targets: targetsPlayers, message: { message: message, time: formattedTime, author: profile.name, photo: profile.photo, color: profile.color.hexString } }
+      playerMessage
     ]);
   };
 
@@ -394,7 +416,7 @@ export const GameEngineProvider = ( {children}: any ) => {
       startGame();
       setLaunch(true);
     }
-  }, []);
+  }, [launch]);
 
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
 
