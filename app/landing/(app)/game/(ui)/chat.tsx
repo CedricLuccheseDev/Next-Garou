@@ -99,6 +99,7 @@ export default function Chat() {
         <Button onClick={() => {
           if (!text.length)
             return;
+
           sendPlayerMessage(text)
           setText("")
         }}>
