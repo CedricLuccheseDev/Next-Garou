@@ -1,8 +1,7 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiResponse } from 'next';
 import { openai } from '@/lib/gpt';
 
-export async function POST(req: NextApiRequest, res: NextApiResponse) {
-    const { prompt } = req.body;
+export async function POST(req: Request, res: NextApiResponse) {
 
     try {
         const response = await openai.chat.completions.create({
