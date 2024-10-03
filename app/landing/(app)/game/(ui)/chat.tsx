@@ -11,7 +11,7 @@ export default function Chat() {
 
   const {
     globalChat,
-    sendPlayerMessage,
+    SendPlayerMessage,
   } = useGameEngine();
 
   const me = myPlayer();
@@ -49,11 +49,14 @@ export default function Chat() {
                 <div className="w-full text-center text-1xl font-unbounded-bold bg-gray-900 p-4 rounded-full">
                   {message.text}
                 </div>
-              ) : (
+              )
+
+              :
+
+              (
                 <div className='flex flex-col space-y-2'>
 
                   {
-                    // <span>{index} {chat.length}</span>
                     index + 1 < chat.length
                     && chat[index - 1].author !== message.author ?
                       <span className={`flex w-full ${message.author === me.getProfile().name ? "justify-end" : "justify-start"} text-1xl font-bold`}>
@@ -91,7 +94,7 @@ export default function Chat() {
           onKeyDown={(event) => {
             if (event.key !== 'Enter' || !text.length)
               return;
-            sendPlayerMessage(text);
+            SendPlayerMessage(text);
             setText("")
           }}
           value={text}
@@ -100,7 +103,7 @@ export default function Chat() {
           if (!text.length)
             return;
 
-          sendPlayerMessage(text)
+          SendPlayerMessage(text)
           setText("")
         }}>
           Send

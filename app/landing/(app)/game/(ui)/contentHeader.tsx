@@ -3,8 +3,10 @@
 import Image from 'next/image'
 import { FaRegUser } from "react-icons/fa";
 import { ArrowRightIcon } from '@radix-ui/react-icons';
-import { Message, NightPhaseCardsOrder, Phases, Roles, useGameEngine } from '../(hooks)/useGameEngine';
+import { useGameEngine } from '../(hooks)/useGameEngine';
 import { useEffect, useState } from 'react';
+import { Message } from '../(hooks)/types';
+import { Phases } from '../(hooks)/enums';
 
 export default function ContentHeader() {
 
@@ -13,7 +15,7 @@ export default function ContentHeader() {
   const {
     round,
     phase,
-    nightPhaseRole,
+    nightPhase,
     globalChat
   } = useGameEngine();
 
@@ -58,26 +60,26 @@ export default function ContentHeader() {
           <div className={`${phase === Phases.Night ? 'text-white' : 'text-white/50'}`}>
             Night
           </div>
-          <div className={`${phase === Phases.Night && NightPhaseCardsOrder[nightPhaseRole] === Roles.Seer ? 'text-white' : 'text-white/50'} text-xl`}>
+          <div className={`${phase === Phases.Night && nightPhase === 0 ? 'text-white' : 'text-white/50'} text-xl`}>
             Seer
           </div>
-          <div className={`${phase === Phases.Night && NightPhaseCardsOrder[nightPhaseRole] === Roles.Werewolf ? 'text-white' : 'text-white/50'} text-xl`}>
+          <div className={`${phase === Phases.Night && nightPhase === 1 ? 'text-white' : 'text-white/50'} text-xl`}>
             Werewolves
           </div>
-          <div className={`${phase === Phases.Night && NightPhaseCardsOrder[nightPhaseRole] === Roles.Witch ? 'text-white' : 'text-white/50'} text-xl`}>
+          <div className={`${phase === Phases.Night && nightPhase === 2 ? 'text-white' : 'text-white/50'} text-xl`}>
             Witch
           </div>
           <ArrowRightIcon />
-          <div className={`${phase === Phases.VoteMayor ? 'text-white' : 'text-white/50'}`}>
-            Mayor Vote
+          <div className={`${phase === Phases.Discussion ? 'text-white' : 'text-white/50'}`}>
+            Discussion
           </div>
           <ArrowRightIcon />
-          <div className={`${phase === Phases.Debate ? 'text-white' : 'text-white/50'}`}>
-            Debate
-          </div>
-          <ArrowRightIcon />
-          <div className={`${phase === Phases.VoteVillager ? 'text-white' : 'text-white/50'}`}>
+          <div className={`${phase === Phases.Vote ? 'text-white' : 'text-white/50'}`}>
             Vote
+          </div>
+          <ArrowRightIcon />
+          <div className={`${phase === Phases.Execution ? 'text-white' : 'text-white/50'}`}>
+            Execution
           </div>
         </div>
       </div>

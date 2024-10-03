@@ -1,17 +1,17 @@
 import { getState, isHost, myPlayer, PlayerState, useMultiplayerState, usePlayersList } from 'playroomkit';
 import { createContext, useContext, useEffect, useRef } from 'react';
-import { Message, Phase } from './types';
-import { NightPhaseOrder, NightPhaseTexts } from './constants';
-import { Phases, Roles, States } from './enums';
+import { Message } from './types';
+import { PhasesTexts } from './constants';
+import { Roles } from './enums';
 
 // Setup
 
 type GameEngineContextType = {
+  chat: any[];
   timer: number;
   pause: boolean;
   round: number;
   phase: number;
-  nightPhase: number;
   roles: any[];
   globalChat: any[];
   werewolvesTarget: string;
@@ -33,14 +33,14 @@ const GameEngineContext = createContext<GameEngineContextType | undefined>(undef
 export const GameEngineProvider = ( {children}: any ) => {
 
   // Game states
-  const [launch, setLaunch] = useMultiplayerState(States.Launch, false);
-  const [globalChat, setGlobalChat] = useMultiplayerState(States.GlobalChat, []);
-  const [timer, setTimer] = useMultiplayerState(States.Timer, 30);
-  const [pause, setPause] = useMultiplayerState(States.Pause, false);
-  const [round, setRound] = useMultiplayerState(States.Round, 1);
-  const [phase, setPhase] = useMultiplayerState(States.Phase, 0);
-  const [nightPhase, setNightPhase] = useMultiplayerState(States.NightPhase, 0);
-  const [roles, setRoles] = useMultiplayerState(States.Roles, []);
+  const [launch, setLaunch] = useMultiplayerState("launch", false);
+  const [chat] = useMultiplayerState("chat", []);
+  const [timer, setTimer] = useMultiplayerState("timer", 0);
+  const [pause, setPause] = useMultiplayerState("pause", false);
+  const [round, setRound] = useMultiplayerState("round", 1);
+  const [phase, setPhase] = useMultiplayerState("phase", 0);
+  const [roles, setRoles] = useMultiplayerState("roles", []);
+  const [globalChat, setGlobalChat] = useMultiplayerState("globalChat", []);
 
   // Players states
   const me = myPlayer();
@@ -57,7 +57,7 @@ export const GameEngineProvider = ( {children}: any ) => {
   // Roles actions
   const roleActions: Record<Roles, () => void> = {
     [Roles.Werewolf]: () => {
-      const werewolves = GetPlayersAlive().filter(player => player.getState(States.Role) === Roles.Werewolf);
+      const werewolves = GetPlayersAlive().filter(player => player.getState("role") === Roles.Werewolf);
       const voteCounts = GetPlayersVoted(werewolves);
       const maxVotes = Math.max(...Object.values(voteCounts as number));
       const topTargets = Object.keys(voteCounts).filter(target => voteCounts[target] === maxVotes);
@@ -65,87 +65,130 @@ export const GameEngineProvider = ( {children}: any ) => {
       setWerewolfTarget(selectedTarget);
     },
     [Roles.Seer]: () => {
-      const seer = GetPlayersAlive().find(player => player.getState(States.Role) === Roles.Seer);
+      const seer = GetPlayersAlive().find(player => player.getState("role") === Roles.Seer);
       if (seer) {
         const target: PlayerState = seer.getState("target");
         if (target) {
           setSeerTarget(target);
-          _sendNarratorMessage(`${target.getProfile().name} is a ${Roles[target.getState(States.Role)]}`, [seer]);
+          _sendNarratorMessage(`${target.getProfile().name} is a ${Roles[target.getState("role")]}`, [seer]);
         }
       }
     },
     [Roles.Witch]: () => {
-      // const witch = GetPlayersAlive().find(player => player.getState(States.Role) === Roles.Witch);
+      const witch = GetPlayersAlive().find(player => player.getState("role") === Roles.Witch);
+      // Ajoute ici la logique pour la sorcière
+    },
+    [Roles.Villager]: function (): void {
+      throw new Error('Function not implemented.');
+    },
+    [Roles.Count]: function (): void {
+      throw new Error('Function not implemented.');
     }
   };
 
-  // Phases
-  const phasesHandlers: Record<Phases, Phase> = {
-    [Phases.Night]: {
-      time: 30,
-      message: "It's night time",
-      nextPhase: Phases.WakeUp,
-      initFunc: () => {
-        setNightPhase(0);
-        _sendNarratorMessage(NightPhaseTexts[0], players);
-        console.log("init");
-      },
-      updateFunc: () => {
-        _sendNarratorMessage(NightPhaseTexts[nightPhase + 1], players);
-      },
-      endFunc: () => {
-        roleActions[NightPhaseOrder[nightPhase]];
-        players.forEach(player => player.setState("target", undefined));
-        setNightPhase(nightPhase + 1);
-      },
-      isFinishedFunc: () => {
-        return nightPhase == NightPhaseOrder.length - 1;
+  const phaseHandlers: Record<Phases, () => void> = {
+    [Phases.Start]: () => {
+      setTimer(TimePhase);
+    },
+    [Phases.Night]: () => {
+      setTimer(TimePhase);
+    },
+    [Phases.NightRole0]: () => {
+      setTimer(TimePhase);
+    },
+    [Phases.NightRole1]: () => {
+      setTimer(TimePhase);
+    },
+    [Phases.NightRole2]: () => {
+      setTimer(TimePhase);
+    },
+    [Phases.WakeUp]: () => {
+      setTimer(TimePhaseInterlude);
+    },
+    [Phases.VoteMayor]: () => {
+      setTimer(TimePhase);
+    },
+    [Phases.Debate]: () => {
+      setTimer(TimePhase);
+    },
+    [Phases.VoteVillager]: () => {
+      setTimer(TimePhase);
+    },
+    [Phases.Execution]: () => {
+      setTimer(TimePhase);
+      // Check if it's a game over
+      if (_isGameOver()) {
+        _sendNarratorMessage("Game Over", players);
+      // Or continue the next round
+      } else {
+        setRound(getState("round") + 1)
       }
     },
-    [Phases.WakeUp]: {
-      time: 10,
-      message: 'Somebody is dead',
-      nextPhase: Phases.Discussion,
-      initFunc: () => { },
-      updateFunc: () => {},
-      endFunc: () => { },
-      isFinishedFunc: () => { return true; }
+    [Phases.End]: () => {
+      setTimer(TimePhase);
     },
-    [Phases.Discussion]: {
-      time: 90,
-      message: 'Lets discuss',
-      nextPhase: Phases.Vote,
-      initFunc: () => { },
-      updateFunc: () => {},
-      endFunc: () => { },
-      isFinishedFunc: () => { return true; },
+    [Phases.Count]: () => {
+      throw new Error('Function not implemented.');
+    }
+  };
+
+  const phaseTransition: Record<Phases, () => void> = {
+    [Phases.Start]: () => {
+      _setPhase(Phases.Night);
     },
-    [Phases.Vote]: {
-      time: 15,
-      message: 'Lets vote',
-      nextPhase: Phases.Execution,
-      initFunc: () => { },
-      updateFunc: () => {},
-      endFunc: () => { },
-      isFinishedFunc: () => { return true; },
+    [Phases.Night]: () => {
+      _setPhase(Phases.Night);
     },
-    [Phases.Execution]: {
-      time: 10,
-      message: 'Is dead',
-      nextPhase: Phases.Night,
-      initFunc: () => { },
-      updateFunc: () => {},
-      endFunc: () => { setRound(round + 1); },
-      isFinishedFunc: () => { return true; },
+    [Phases.Seer]: () => {
+      _setPhase(Phases.Werewolf)
+      _processRolesActions()
+    },
+    [Phases.Werewolf]: () => {
+      _setPhase(Phases.Witch)
+      _processRolesActions()
+    },
+    [Phases.Witch]: () => {
+      _setPhase(Phases.WakeUp)
+      _processRolesActions()
+    },
+    [Phases.WakeUp]: () => {
+      if (round == 1)
+        _setPhase(Phases.VoteMayor);
+      else
+        _setPhase(Phases.Debate);
+    },
+    [Phases.VoteMayor]: () => {
+      _setPhase(Phases.Debate);
+    },
+    [Phases.Debate]: () => {
+      _setPhase(Phases.VoteVillager);
+    },
+    [Phases.VoteVillager]: () => {
+      _setPhase(Phases.Execution);
+    },
+    [Phases.Execution]: () => {
+      // Check if it's a game over
+      if (_isGameOver()) {
+        _setPhase(Phases.End);
+      // Or continue the next round
+      } else {
+        _setPhase(Phases.Night);
+      }
+    },
+    [Phases.End]: () => {
+      setTimer(TimePhase);
+    },
+    [Phases.Count]: () => {
+      throw new Error('Function not implemented.');
     }
   };
 
   const states = {
+    chat,
     timer,
     pause,
     round,
     phase,
-    nightPhase,
     roles,
     globalChat,
     werewolvesTarget,
@@ -166,37 +209,47 @@ export const GameEngineProvider = ( {children}: any ) => {
     // Add werewolves
     roles_.push(...Array(werewolfRoleCount).fill(Roles.Werewolf));
     // Add others
-    roles_.push(...Array(playersCount - werewolfRoleCount).fill(0).map((_, index) => Math.min(index + 1, (Object.keys(Roles).length / 2) - 1)));
+    roles_.push(...Array(playersCount - werewolfRoleCount).fill(0).map((_, index) => Math.min(index + 1, Roles.Count - 1)));
 
     // Shuffle
     const shuffledRoles = roles_.sort(() => Math.random() - 0.5);
 
-    // Set roles
-    setRoles(roles_);
-
     // Attribution des rôles
     players.forEach((player, index) => {
-      player.setState(States.Role, shuffledRoles[index]);
+      player.setState("role", shuffledRoles[index]);
     });
   };
 
-  const _onTimerCompleted = () => {
-    // Launch end phase
-    const phaseHandler = phasesHandlers[phase as Phases] as Phase;
-    phaseHandler.endFunc();
+  const _setPhase = (phase_: Phases) => {
+    if (getState("phase") == phase_)
+      return;
 
-    // Next phase
-    const nextIndex = (phase + 1) % (Object.keys(Phases).length / 2);
-    const nextPhaseHandler = phasesHandlers[nextIndex as Phases] as Phase;
-    if (phaseHandler.isFinishedFunc()) {
-      setPhase(nextIndex);
-      _sendNarratorMessage(nextPhaseHandler.message, players);
-      nextPhaseHandler.initFunc();
-      setTimer(nextPhaseHandler.time);
-    } else {
-      phaseHandler.updateFunc();
-      setTimer(phaseHandler.time);
+    // Set phase
+    setPhase(phase_);
+
+    // Send message
+    _sendNarratorMessage(PhasesTexts[phase_], players);
+  }
+
+  const _onTimerCompleted = () => {
+    let phase = getState("phase") as Phases;
+    if (phaseTransition[phase]) {
+      phaseTransition[phase]();
     }
+
+    phase = getState("phase") as Phases;
+    if (phaseHandlers[phase]) {
+      phaseHandlers[phase]();
+    }
+  }
+
+  const _processRolesActions = () => {
+    if (roleActions[getState("roles") as Roles]) {
+      roleActions[getState("roles") as Roles]();
+    }
+
+    // Reset des cibles des joueurs
+    players.forEach(player => player.setState("target", undefined));
   }
 
   const _isGameOver = (): boolean => {
@@ -206,22 +259,16 @@ export const GameEngineProvider = ( {children}: any ) => {
   const _startGame = () => {
     if (isHost()) {
       // Default init
+      setTimer(TimePhaseInterlude, true);
       setRound(1, true);
-      setPhase(0);
+      _setPhase(Phases.Start);
       setGlobalChat([], true);
 
       // Setup game
       _makeRoles();
 
       // Send narrator message
-      _sendNarratorMessage("The game started, you are " + Roles[me.getState(States.Role)], players);
-
-      // Init first phase
-      const phaseHandler = phasesHandlers[phase as Phases] as Phase;
-      phaseHandler.initFunc();
-      setTimer(phaseHandler.time);
-
-      console.log("Game Started");
+      _sendNarratorMessage("The game started, you are " + Roles[me.getState("role")], players);
     }
   }
 
@@ -265,7 +312,7 @@ export const GameEngineProvider = ( {children}: any ) => {
   };
 
   const GetPlayersAlive = (): PlayerState[] => {
-    return players.filter((player: { getState: (arg0: string) => undefined; }) => player.getState(States.Dead) == undefined);
+    return players.filter((player: { getState: (arg0: string) => undefined; }) => player.getState("dead") == undefined);
   };
 
   const GetPlayersVoted = (filteredPlayers: PlayerState []): any => {
@@ -278,18 +325,18 @@ export const GameEngineProvider = ( {children}: any ) => {
 
   const SendPlayerMessage = (text: string) => {
     // Check if role is defined
-    const role = me.getState(States.Role);
+    const role = me.getState("role");
     if (role == undefined)
       return;
 
     // Select players targets
     let targetsPlayers = players;
     // Dead players send message to dead players
-    if (me.getState(States.Dead))
-      targetsPlayers = players.filter((target: { getState: (arg0: string) => any; }) => target.getState(States.Dead));
+    if (me.getState("dead"))
+      targetsPlayers = players.filter((target: { getState: (arg0: string) => any; }) => target.getState("dead"));
     // Players send message to role mates in night phase
     else if (getState("phase") == Phases.Night)
-      targetsPlayers = players.filter((target: { getState: (arg0: string) => any; }) => target.getState(States.Role) == me.getState(States.Role));
+      targetsPlayers = players.filter((target: { getState: (arg0: string) => any; }) => target.getState("role") == me.getState("role"));
 
     // Format time
     const formattedTime = new Date().toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
@@ -356,13 +403,13 @@ export const GameEngineProvider = ( {children}: any ) => {
   useEffect(() => {
     if (isHost()) {
       timerInterval.current = setInterval(() => {
-          if (getState(States.Pause))
+          if (getState("pause"))
             return;
-          const newTime = getState(States.Timer) - 1;
+          const newTime = getState("timer") - 1;
           if (newTime <= 0)
             _onTimerCompleted();
           else
-            setTimer( newTime, true);
+            setTimer(newTime, true);
       }, 1000);
     }
 

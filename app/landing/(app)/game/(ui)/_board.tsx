@@ -16,7 +16,6 @@ export default function Board() {
   } = useGameEngine();
 
   const me = myPlayer();
-  const players = usePlayersList();
 
   const renderPlayers = () => {
     const playersAlive = getPlayersAlive();
