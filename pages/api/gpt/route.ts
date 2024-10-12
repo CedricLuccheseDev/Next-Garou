@@ -2,7 +2,6 @@ import { NextApiResponse } from 'next';
 import { openai } from '@/lib/gpt';
 
 export async function POST(req: Request, res: NextApiResponse) {
-
     try {
         const response = await openai.chat.completions.create({
             model: 'gpt-3.5-turbo',

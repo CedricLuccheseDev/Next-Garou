@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Inter } from "next/font/google";
-import "../globals.css";
+import "./globals.css";
 import clsx from "clsx";
 import ThemeProvider from "@/src/theme/ThemeProvider";
 
@@ -8,7 +8,7 @@ const dmSans = DM_Sans({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Next Garou",
-  description: "The new wolf game generation",
+  description: "The new werewolf game generation",
 };
 
 export default function RootLayout({

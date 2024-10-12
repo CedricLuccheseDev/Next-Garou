@@ -1,15 +1,15 @@
 import HomeParticles from '@/app/(ui)/Particles';
 import Image from 'next/image'
-import CHeader from './CHeader';
+import Header from './Header';
 import { Button } from '@/components/ui/button';
 
-export default function LandingOnboard() {
+export default function LandingHero() {
   return (
     <section className='w-screen h-screen bg-gradient-to-b from-background to-[#070721]'>
       <div className='container py-2 px-8 mx-auto'>
         <HomeParticles />
         <div className='w-full h-full flex flex-col space-y-2'>
-          <CHeader />
+          <Header />
           <div className="flex flex-row p-16 items-center">
             <div className="flex flex-col h-full space-y-8 w-full">
               <div className="font-unbounded-bold font-medium text-6xl animate-fade">

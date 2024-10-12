@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
-function CHeader() {
+function Header() {
   return (
     <header className="flex justify-between py-4 rounded-lg backdrop-filter backdrop-blur-2xl bg-black/10">
       <div className='flex justify-between items-center w-full px-4'>
@@ -37,4 +37,4 @@ function CHeader() {
   )
 }
 
-export default CHeader
+export default Header
