@@ -1,3 +1,6 @@
+/** @brief Game update callback  */
+type GameUpdateCallback = (game: Game) => void;
+
 /** @brief Roles enumeration */
 export enum Roles
 {
@@ -55,70 +58,126 @@ export class Game {
  *  Public
  */
   /** @brief Constructor */
-  constructor(id: string, players: Player[] = []) {
-    this.id = id;
-    this.players = players;
+  constructor(id: string, gameUpdateCallback: GameUpdateCallback) {
+    this._id = id;
+    this._onGameUpdate = gameUpdateCallback;
   }
 
   /** @brief Get game id */
-  public getId(): string { return this.id; }
+  public get id(): string { return this._id; }
 
 
   /** @brief Get players */
-  public getPlayers(): Player[] { return this.players; }
+  public get players(): Player[] { return this._players; }
 
   /** @brief Get the count of players */
-  public getPlayerCount(): number { return this.players.length; }
+  public get playersCount(): number { return this.players.length; }
 
   /** @brief Add a new player */
   public addPlayer(playerId: string, name: string) {
-    const player: Player = { id: playerId, name, role: Roles.Werewolf, isAlive: true };
-    this.players.push(player);
+    // Add player
+    this._players.push({ id: playerId, name, role: Roles.Werewolf, isAlive: true } as Player);
+    // Emit event
+    this._emitGameUpdate();
   }
 
   /** @brief Remove a player */
   public removePlayer(playerId: string) {
-    this.players = this.players.filter(player => player.id !== playerId);
+    // Remove player
+    this._players = this.players.filter(player => player.id !== playerId);
+    // Emit event
+    this._emitGameUpdate();
   }
 
+
   /** @brief Get messages */
-  public getMessages(): Message[] { return this.messages; }
+  public get messages(): Message[] { return this._messages; }
+
+  /** @brief Send message by player */
+  public sendMessageByPlayer(userId: string, text: string): void {
+    // Get player
+    const player = this.players.find(player => player.id !== userId) as Player;
+    // Select players targets
+    let targetsPlayers = this.players.filter((target: Player) => target.id != userId);
+    // Dead players send message to dead players
+    if (!player.isAlive)
+      targetsPlayers = this.players.filter((target: Player) =>  !target.isAlive);
+    // Players send message to role mates in night phase
+    else if (this._phase == Phases.Night)
+      targetsPlayers = this.players.filter((target) => target.role == player.role);
+
+    // Format time
+    const formattedTime = new Date().toLocaleTimeString('fr-FR', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+
+    // Push new message
+    this._messages.push({
+      id: this.messages.length,
+      targets: targetsPlayers,
+      text: text,
+      time: formattedTime,
+      author: player.name,
+    });
+
+    // Emit event
+    this._emitGameUpdate();
+  };
 
 
   /** @brief Get players role */
-  public getRoles(): Roles[] { return this.players.map(player => player.role); }
+  public get roles(): Roles[] { return this._players.map(player => player.role); }
 
 
   /** @brief Get timer */
-  public getTimer(): number { return this.timer; }
+  public get timer(): number { return this._timer; }
 
 
   /** @brief Get phase */
-  public getPhase(): number { return this.phase; }
+  public get phase(): number { return this._phase; }
 
 
   /** @brief Get round */
-  public getRound(): number { return this.round; }
+  public get round(): number { return this._round; }
+
+
+  /** @brief is Started */
+  public get isStarted(): boolean { return this._isStarted; }
 
 
   /** @brief Start or Restart a game */
   start(): void {
     // Clear data
-    this.phase = Phases.Night;
-    this.round = 0;
-    this.messages = [];
+    this._phase = Phases.Night;
+    this._round = 0;
+    this._messages = [];
 
     // Assign roles
-    this.assignRoles();
+    this._assignRoles();
+
+    // Launch timer
+    if (this._timerInterval)
+      clearInterval(this._timerInterval);
+    this._timerInterval = setInterval(() => {
+      // Launch timer completed when timer is done
+      const newTime = this._timer - 1;
+      if (newTime <= 0)
+        this._timerCompleted();
+      // Set new timer
+      else
+        this._timer = newTime;
+    }, 1000);
 
     // Start game
-    this.isStarted = true;
+    this._isStarted = true;
+
+    // Emit event
+    this._emitGameUpdate();
   }
 
 /**
  * Private
  */
-  private assignRoles() {
+  /** @brief Assign roles */
+  private _assignRoles() {
     const playersCount = this.players.length;
     const rolesCount = Object.keys(Roles).length / 2;
     const werewolfRoleCount = Math.ceil(playersCount / 3);
@@ -137,27 +196,58 @@ export class Game {
     });
   }
 
+  /** @brief timer completed */
+  private _timerCompleted() {
+    // // Launch end phase
+    // const phaseHandler = phasesHandlers[phase as Phases] as Phase;
+    // phaseHandler.endFunc();
+
+    // // Next phase
+    // const nextIndex = (phase + 1) % (Object.keys(Phases).length / 2);
+    // const nextPhaseHandler = phasesHandlers[nextIndex as Phases] as Phase;
+    // if (phaseHandler.isFinishedFunc()) {
+    //   setPhase(nextIndex);
+    //   _sendNarratorMessage(nextPhaseHandler.message, players);
+    //   nextPhaseHandler.initFunc();
+    //   setTimer(nextPhaseHandler.time);
+    // } else {
+    //   phaseHandler.updateFunc();
+    //   setTimer(phaseHandler.time);
+    // }
+  }
+
+  /** @brief Emit game update */
+  private _emitGameUpdate() {
+    if (this._onGameUpdate)
+      this._onGameUpdate(this);
+  }
 
   /** @brief Game id */
-  private id: string;
+  private _id: string;
+
+  /** @brief Event on update */
+  private _onGameUpdate: GameUpdateCallback | null = null;
 
   /** @brief Players */
-  private players: Player[] = [];
+  private _players: Player[] = [];
 
   /** @brief Messages */
-  private messages: Message[] = [];
+  private _messages: Message[] = [];
 
   /** @brief Phase */
-  private phase: Phases = Phases.Night;
+  private _phase: Phases = Phases.Night;
 
   /** @brief Round */
-  private round: number = 0;
+  private _round: number = 0;
 
   /** @brief Timer */
-  private timer: number = 30;
+  private _timer: number = 30;
+
+  /** @brief Timer interval */
+  private _timerInterval: NodeJS.Timeout | null = null;
 
   /** @brief Is started */
-  private isStarted: boolean = false;
+  private _isStarted: boolean = false;
 }
 
 // vote(voterId: string, targetId: string) {

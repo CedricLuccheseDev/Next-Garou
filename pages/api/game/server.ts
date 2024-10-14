@@ -3,6 +3,7 @@ import { Server as IOServer } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import { Socket as NetSocket } from 'net';
 import { GameManager } from '../../../lib/gameManager';
+import { Game } from '@/lib/game';
 
 const globalGameManager = global as any;
 globalGameManager.gameManager = globalGameManager.gameManager || new GameManager();
@@ -41,17 +42,26 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       // Server log
       console.log(`[success] server.ts: on 'connection' => User connected ${clientSocket.id}`);
 
-      function getAdminInformations() {
+      /** @brief Get admin informations utils */
+      function getAdminInformations(): any {
         return {
-          games: gameManager.getAll(),
+          games: gameManager.getAll().map((game: Game) => ({
+            id: game.id,
+            players: game.players,
+            playersCount: game.playersCount,
+            isStarted: game.isStarted,
+            phase: game.phase,
+            round: game.round,
+            timer: game.timer,
+          })),
           usersId: usersId
-        }
+        };
       }
 
       /** @brief Create Game */
       clientSocket.on('createGame', (callback) => {
         // Create game
-        const gameId = gameManager.create();
+        const gameId = gameManager.create(io);
         // Process callback
         callback(gameId);
         // Send admin informations
@@ -71,8 +81,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
         // Add player to game
         game.addPlayer(clientSocket.id, playerName);
-        // Notify all clients that game players updated
-        io.to(gameId).emit('playersUpdated', game.getPlayers());  // Mise à jour des joueurs dans la partie
         // Send admin informations
         io.emit('adminInfosUpdated', getAdminInformations());
         // Server Log
@@ -123,13 +131,37 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         console.log(`[success] server.ts: on 'removeGame' => Game ${gameId} has been removed`);
       });
 
+      /** @brief Get game */
+      clientSocket.on('getGame', (gameId, callback) => {
+        // Get game
+        const game = gameManager.get(gameId);
+        if (game) {
+          callback({
+            success: true,
+            game: {
+              id: game.id,
+              players: game.players,
+              isStarted: game.isStarted,
+              phase: game.phase,
+              round: game.round,
+              timer: game.timer,
+            },
+          });
+        // Send success false if game is not found
+        } else {
+          callback({
+            success: false,
+          });
+        }
+      });
+
       /** @brief Send games */
       clientSocket.on('getGames', (callback) => {
         // Process callback
         const games = Object.values(gameManager.getAll());
         callback(games);
         // Server Log
-        console.log("server.ts: on 'gets' => " + gameManager.getAll())
+        console.log("server.ts: on 'getGames' => " + games)
       });
 
       /** @brief Get admin infos games */
